@@ -15,7 +15,7 @@ import argparse
 
 
 def handle_file(file_idx, file):
-    print(file_idx)
+    # print(file_idx)
 
     with open(file, 'r') as f:
         lines = f.read().strip().split('\n')
@@ -96,8 +96,8 @@ def make_all_dataset(json_files_path):
     que_res_list = []
     # json_files = json_files[1471:]
     for file_idx, file in enumerate(json_files):
-        que_res_list.append(multiprocessing_pool.apply_async(handle_file, args=(file_idx, file)))
-        # handle_file(file_idx, file)
+        # que_res_list.append(multiprocessing_pool.apply_async(handle_file, args=(file_idx, file)))
+        que_res_list.append(handle_file(file_idx, file))
 
     multiprocessing_pool.close()
     multiprocessing_pool.join()
@@ -112,29 +112,36 @@ def make_all_dataset(json_files_path):
 def split_dataset(file_vecs):
     train_and_val_dataset = []
     test_data = []
+    train_size = 0
+    test_size = 0
 
     for file_vec_idx, file_vec in enumerate(file_vecs):
 
         file, file_idx, workloadkey_idx, workloadkey, workload_args, flop_ct, line_vecs = file_vec
-        print(file_vec_idx, len(line_vecs))
+        # print(file_vec_idx, len(line_vecs))
 
         if workloadkey in hold_out_tasks_set:
             test_data.append(file_vec)
+            test_size += len(file_vec)
         else:
             train_and_val_dataset.append(file_vec)
+            train_size += len(file_vec)
 
     train_and_val_dataset_new = []
+    
     for data_idx, data in enumerate(train_and_val_dataset):
         file, file_idx, workloadkey_idx, workloadkey, workload_args, flop_ct, line_vecs = data
         train_and_val_dataset_new.extend(line_vecs)
         # for line_index, line in enumerate(line_vecs):
         #     train_and_val_dataset_new.append([file, file_idx, workloadkey_idx, workloadkey, workload_args, flop_ct, line, line_index])
-
+        train_size += len(line_vecs)
 
     with open(f'{args.save_name}_{args.files_cnt}_test.pkl', 'wb') as f:
         pickle.dump(test_data, f)
     with open(f'{args.save_name}_{args.files_cnt}_train_and_val.pkl', 'wb') as f:
         pickle.dump(train_and_val_dataset_new, f)
+    print(f"Train/Val size: {train_size} ({len(train_and_val_dataset_new)} tasks)")
+    print(f"Test size: {test_size} ({len(test_data)} tasks)")
 
 
 

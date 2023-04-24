@@ -41,6 +41,15 @@ def pred_a_dataset(datas, task_pred_dict, model):
     ), test_loader.min_latency.min().numpy(), labels_all.numpy())
 
 
+def metric_elementwise_mape(preds, labels):
+    preds = preds.flatten()
+    labels = labels.flatten()
+    assert preds.shape == labels.shape
+    return np.abs((labels-preds)/labels)
+
+def metric_mape(preds, labels):
+    return float(np.mean(metric_elementwise_mape(preds, labels)))
+
 def eval_model(model_file):
 
     with open(model_file, 'rb') as f:
@@ -48,10 +57,30 @@ def eval_model(model_file):
     model.eval()
     task_pred_dict = {}
 
+    preds_all = np.empty(0, dtype=float)
+    labels_all = np.empty(0, dtype=float)
+
     pred_a_dataset_dict = {}
     for data_idx, data in enumerate(test_datasets):
         file, file_idx, workloadkey_idx, workloadkey, workload_args, flop_ct, line_vecs = data
         pred_a_dataset_dict[workloadkey] = data
+
+        pred_a_dataset(data, task_pred_dict, model)
+        preds, min_latency, labels = task_pred_dict[workloadkey]
+
+        real_preds = min_latency / np.maximum(preds, 1e-5)
+        real_labels = min_latency / np.maximum(labels, 1e-5)
+
+        # real_preds = preds
+        # real_labels = labels
+        
+        preds_all = np.concatenate((preds_all, real_preds), axis=0)
+        labels_all = np.concatenate((labels_all, real_labels), axis=0)
+    
+    print("Average pred: ", np.mean(preds_all))
+    print("Average label: ", np.mean(labels_all))
+    print("Overall MAPE: ", metric_mape(preds_all, labels_all))
+    # exit(0)
 
     files = [
         'dataset/network_info/((resnet_50,[(1,3,224,224)]),%s).task.pkl' % args.platform,
