@@ -95,16 +95,24 @@ def make_all_dataset(json_files_path):
     multiprocessing_pool = multiprocessing.Pool()
     que_res_list = []
     # json_files = json_files[1471:]
-    for file_idx, file in enumerate(json_files):
-        # que_res_list.append(multiprocessing_pool.apply_async(handle_file, args=(file_idx, file)))
-        que_res_list.append(handle_file(file_idx, file))
+    use_mp = False
+    if use_mp:
+        for file_idx, file in enumerate(json_files):
+            que_res_list.append(multiprocessing_pool.apply_async(handle_file, args=(file_idx, file)))
+    else:
+        for file_idx, file in enumerate(json_files):
+            que_res_list.append(handle_file(file_idx, file))
 
     multiprocessing_pool.close()
     multiprocessing_pool.join()
 
     file_vecs = []
-    for que_res in que_res_list:
-        file_vecs.append(que_res.get())
+    if use_mp:
+        for que_res in que_res_list:
+            file_vecs.append(que_res.get())
+    else:
+        for que_res in que_res_list:
+            file_vecs.append(que_res)
 
     return file_vecs
 
