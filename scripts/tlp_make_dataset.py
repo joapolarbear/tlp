@@ -90,6 +90,7 @@ def handle_file(file_idx, file):
 def make_all_dataset(json_files_path):
     tasks = load_and_register_tasks()
     json_files = sorted(glob.glob(json_files_path + '/' + '*.json'))
+    json_files = [f for f in json_files if not os.path.basename(f).startswith("measure_stat")]
     json_files = random.sample(json_files, args.files_cnt)
 
     multiprocessing_pool = multiprocessing.Pool()
@@ -225,7 +226,7 @@ if __name__ == "__main__":
             args.crop_emb_size = 20
 
     print(args)
-
+    
     file_vecs = make_all_dataset(args.json_files_path)
     split_dataset(file_vecs)
     print('make dataset tlp done.')

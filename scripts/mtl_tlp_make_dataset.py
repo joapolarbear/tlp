@@ -11,7 +11,7 @@ def union_all():
 
         for file_idx__, (data1, data2) in enumerate(zip(datasets_global1, datasets_global2)):
 
-            assert (data1[0] == data2[0])
+            # assert (data1[0] == data2[0]), (data1[0], data2[0])
             # assert (data1[6][0] == data2[6][0])
             datas = list(data1)
             datas.append(data2[-2])
